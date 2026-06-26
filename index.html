@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Demand Planning — working prototype</title>
 <style>
   :root{
@@ -49,6 +52,7 @@
   .pname{font-weight:700;font-size:13px;text-transform:uppercase} .pcount{margin-left:auto;font-weight:700;font-size:13px}
   .bar{height:7px;border-radius:4px;background:var(--track);overflow:hidden;display:flex} .bar i{display:block;height:100%}
   .meta{font-size:12px;color:var(--ink2);margin-top:5px}
+  .nobus{color:var(--red);font-size:11px;font-weight:600;margin-top:5px}
   .togo{font-size:12px;font-weight:600;margin-top:3px}
   .alarm{background:var(--redbg);color:var(--red);border-radius:7px;padding:5px 8px;font-size:12px;font-weight:600;margin-top:6px}
   .steer{color:var(--brewery);font-size:12px;font-weight:600;margin-top:6px}
@@ -199,14 +203,10 @@
     return '<div class="bar"><i style="width:'+(bk/thr*100)+'%;background:var(--booked)"></i><i style="width:'+(bl/thr*100)+'%;background:'+col+'"></i></div>';
   }
   function pocketCard(it){
-    var t=TOURS[it.tour],tt=it.booked+it.building,close=tt>=6,togo=10-tt;
+    var t=TOURS[it.tour],tt=it.booked+it.building;
     var h='<div class="pocket"><div class="prow"><span class="dot" style="background:'+t.c+'"></span><span class="pname" style="color:'+t.c+'">'+t.name+'</span><span class="pcount">'+tt+'/10</span></div>';
     h+=bar(it.booked,it.building);
-    h+='<div class="meta">'+(it.booked>0?it.booked+' booked · ':'')+it.building+' building</div>';
-    if(it.noBus){h+='<div class="alarm">'+it.booked+' booked · no bus assigned — resolve</div>';if(it.steer)h+='<div class="steer">↗ '+it.steer+'</div>';}
-    else if(it.steer){h+='<div class="steer">↗ '+it.steer+'</div>';}
-    else if(close&&togo>0){h+='<div class="togo" style="color:var(--amber)">'+togo+' to go</div>';}
-    else if(!close){h+='<div class="togo" style="color:var(--gray)">weak</div>';}
+    if(it.noBus)h+='<div class="nobus">no bus</div>';
     return h+'</div>';
   }
   function renderBoard(){
@@ -238,7 +238,7 @@
     var m=document.getElementById("modal");
     var rng=a.dow.charAt(0)+a.dow.slice(1).toLowerCase()+" "+MO(a.n)+" "+a.n+(b?" – "+(b.dow.charAt(0)+b.dow.slice(1).toLowerCase())+" "+b.n:"");
     var html='<div class="mhead"><span class="mtitle">PLAN DAY</span><span class="mpill">'+rng+'</span><div class="mtools"><button class="undo" id="undoBtn"'+(countMoves()?'':' disabled')+'>↶ Undo</button><button class="xclose" id="xBtn">✕</button></div></div>';
-    html+='<div class="mhelp">Drag a <b>group</b> by the ⠿ handle onto another day or tour of the same category — you move the whole group, never part of it. <b>Or tap a group, then tap a slot.</b> Projections show the result <b>if accepted</b>; the real count doesn\'t change until the customer says yes. Paid groups are pinned.</div>';
+    html+='<div class="mhelp"><b>Tap a group, then tap a slot</b> to move it — or drag it by the ⠿ handle. You move the whole group. The slot shows the result <b>if accepted</b>; nothing changes for real until the customer says yes. Paid groups are pinned.</div>';
     html+='<div class="cols">'+dayCol(a)+(b?dayCol(b):'<div class="col"><h4>'+b0(idx)+'</h4></div>')+'</div>';
     html+=holdLane(focusTours,idx);
     m.innerHTML=html;
@@ -276,7 +276,8 @@
     return '<div class="'+cls+'" data-party="'+p.id+'"'+dg+'>'+hdl+'<span>'+p.name+'</span>'+tag+(movedIn?' <span class="flex" style="color:var(--green);background:#e9f7ef">moved</span>':'')+'<span class="gsz">'+p.size+'</span></div>';
   }
   function holdLane(focusTours,idx){
-    var h='<div class="hold"><h4>Holding — public building demand for these tours across the 14 days</h4><div class="hsub">Drag (or tap) a group onto a matching slot above · private-pending stays out.</div><div class="chips">';
+    var names=Object.keys(focusTours).map(function(t){return TOURS[t].name;}).join(' / ');
+    var h='<div class="hold"><h4>More '+names+' groups to pull in</h4><div class="hsub">Other '+names+' groups scattered across the next 2 weeks. Drag or tap one onto a slot above to combine them into a tour that fills.</div><div class="chips">';
     var any=false;
     DAYS.forEach(function(od){
       if(od.idx===idx||od.idx===idx+1)return; // those two days are shown as columns
