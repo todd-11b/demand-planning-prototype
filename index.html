@@ -36,6 +36,19 @@
   .dhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
   .dnum{font-size:23px;font-weight:700}.ddow{font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:600}
   .nodemand{color:var(--muted);font-style:italic;font-size:12.5px}
+  .vsub{color:var(--ink2);font-size:13.5px;padding:4px 0 0}
+  .vdesc{color:var(--muted);font-size:13.5px;margin:8px 0 16px}
+  .bookcard{border-radius:8px;padding:8px 11px;margin-bottom:8px;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .bookcard.pub{background:var(--greenbg);color:#15803d;border:1px solid #bfe6cf}
+  .bookcard.priv{background:#f3f3f7;color:var(--ink);border:1px solid var(--line)}
+  .bookcard .seats{font-weight:700;font-size:11.5px;white-space:nowrap}
+  .nothing{color:var(--muted);font-style:italic;font-size:12.5px;margin-bottom:8px}
+  .pill{display:inline-block;background:var(--accentbg);color:#3b3a8f;border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:600}
+  .dormcard{border:1px dashed #d6d6de;border-radius:9px;padding:10px 11px;background:#fcfcfe}
+  .dormtour{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em}
+  .dormname{color:#7a7f8c;font-size:13px;font-weight:600;margin-top:3px}
+  .dormcold{color:var(--muted);font-size:11px;margin-top:4px}
+  .emptydash{color:#d2d4dc;font-size:18px}
   .book{border-radius:8px;padding:6px 9px;margin-bottom:7px;font-size:12px;background:var(--greenbg);color:#15803d;display:flex;justify-content:space-between;gap:8px;font-weight:600}
   .book .bk{opacity:.8;white-space:nowrap}
   .pk{border:1px solid transparent;border-radius:9px;padding:7px 8px;margin:0 -8px 6px;}
@@ -69,7 +82,7 @@
   <div class="proto">Prototype · sample data, anonymized · nothing here is live.</div>
   <div class="top">
     <div class="brand">DEMAND</div>
-    <div class="tabs"><span data-tab="holding">Holding</span><span class="on" data-tab="planning">Planning</span><span data-tab="dormant">Dormant</span></div>
+    <div class="tabs"><span data-tab="booked">Booked</span><span class="on" data-tab="planning">Demand Planning</span><span data-tab="dormant">Dormant</span></div>
     <div class="range"><button class="nav">‹</button><span>Jun 28 – Jul 11</span><button class="nav">›</button></div>
   </div>
   <div id="planning">
@@ -85,8 +98,16 @@
     <div class="howto"><b>Drag a tour from one day onto another day</b> to consolidate the demand (same tour). The day you drop on goes up; paid guests stay on their date. Times show when each bus is tied up — "no bus" means all three are taken that window. Or tap a tour, then tap a day.</div>
     <div id="board"></div>
   </div>
-  <div id="holding" class="stub" style="display:none">Holding and Dormant are separate tabs in the full build. This prototype is the <b>Planning</b> calendar.</div>
-  <div id="dormant" class="stub" style="display:none">Dormant is a read-only recovery pool in the full build. This prototype is the <b>Planning</b> calendar.</div>
+  <div id="booked" style="display:none">
+    <div class="vsub">Confirmed &amp; private departures · what we are actually running</div>
+    <div class="vdesc">Confirmed and private departures. A public tour shows seats filled vs capacity, and where open seats could fill from Demand Planning.</div>
+    <div id="bookedBoard"></div>
+  </div>
+  <div id="dormant" style="display:none">
+    <div class="vsub">Cold / aged-out demand · read-only recovery pool</div>
+    <div class="vdesc">Cold and aged-out demand, placed on the date it last wanted — faded because it's no longer active. Read-only for now; a later phase adds revive actions that move a lead back into Demand Planning through the approval rail.</div>
+    <div id="dormantBoard"></div>
+  </div>
 </div>
 <div id="bar"><div><div class="bl" id="barCount">0 planned moves</div><div class="bs">Nothing sends. Each becomes one offer for Tim to approve.</div></div><div class="br"><button class="btn ghost" id="undoBtn">Undo</button><button class="btn ghost" id="clearBtn">Clear</button><button class="btn primary" id="createBtn">Create offer proposals</button></div></div>
 <div id="seltip"></div><div id="toast"></div>
@@ -103,24 +124,31 @@
   var FLEET=["Bus 3","Bus 5","Bus 6"];
   var ni=0;function sizes(t){var o=[],r=t,pat=[3,2,4,2,1,3],i=0;while(r>0){var s=Math.min(r,pat[i%pat.length]);if(r-s===1)s=r;o.push(s);r-=s;i++;}return o;}
   function pk(tour,booked,building){return{kind:"pocket",tour:tour,booked:booked,building:building};}
-  function bk(label,s,e,bus){return{kind:"book",label:label,s:s,e:e,bus:bus};}
+  function bk(label,s,e,bus,pub,seats,cap){return{kind:"book",label:label,s:s,e:e,bus:bus,pub:!!pub,seats:seats,cap:cap};}
   var DAYS=[
-    {n:28,dow:"SUN",items:[bk("Private",18,22,"Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
+    {n:28,dow:"SUN",items:[bk("Private",18,21,"Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
     {n:29,dow:"MON",items:[pk("bbq",0,2)]},
     {n:30,dow:"TUE",items:[]},
     {n:1,dow:"WED",items:[pk("bbq",0,3),pk("sightseeing",0,2)]},
     {n:2,dow:"THU",items:[pk("bbq",1,3),pk("ghost",0,2)]},
     {n:3,dow:"FRI",items:[pk("ghost",2,7),pk("brewery",0,5),pk("bbq",0,5)]},
-    {n:4,dow:"SAT",items:[bk("Winery",12,15,"Bus 6"),bk("Private",18,22,"Bus 5"),bk("Private",19,23,"Bus 3"),bk("Private",20,24,"Bus 6"),pk("brewery",2,6),pk("ghost",3,7),pk("bbq",2,4)]},
+    {n:4,dow:"SAT",items:[bk("Winery",12,15,"Bus 6",true,10,14),bk("Private",19,22,"Bus 3"),pk("brewery",2,6),pk("ghost",3,7),pk("bbq",2,4)]},
     {n:5,dow:"SUN",items:[pk("bbq",2,6),pk("brewery",1,5),pk("winery",0,3)]},
     {n:6,dow:"MON",items:[]},
     {n:7,dow:"TUE",items:[pk("bbq",0,2)]},
     {n:8,dow:"WED",items:[pk("ghost",0,3)]},
     {n:9,dow:"THU",items:[pk("bbq",0,4),pk("sightseeing",0,2)]},
     {n:10,dow:"FRI",items:[pk("ghost",1,5),pk("brewery",2,5),pk("bbq",0,5)]},
-    {n:11,dow:"SAT",items:[bk("Winery",12,15,"Bus 6"),bk("Private",18,22,"Bus 5"),pk("brewery",2,7),pk("ghost",1,6),pk("bbq",0,5)]}
+    {n:11,dow:"SAT",items:[bk("Winery",12,15,"Bus 6",true,10,14),bk("Private",18,21,"Bus 1"),pk("brewery",2,7),pk("ghost",1,6),pk("bbq",0,5)]}
   ];
   DAYS.forEach(function(d,i){d.idx=i;});
+  var DORMANT=[
+    {di:5,tour:"ghost",name:"Hannah B",size:2,cold:18},
+    {di:6,tour:"bbq",name:"The Ruiz party",size:5,cold:24},
+    {di:9,tour:"brewery",name:"Devon K",size:3,cold:31},
+    {di:12,tour:"winery",name:"Marcy L",size:4,cold:27},
+    {di:13,tour:"sightseeing",name:"Sam P",size:2,cold:40}
+  ];
 
   var pm={},sel=null; // pm: "di:tour" -> targetDay ; sel: "di:tour"
   var COLH=["SUN","MON","TUE","WED","THU","FRI","SAT"];
@@ -197,10 +225,30 @@
   function syncBar(){var b=document.getElementById("bar");document.getElementById("barCount").textContent=count()+" planned move"+(count()===1?"":"s");if(count()>0)b.classList.add("show");else b.classList.remove("show");}
   var tt;function toast(m){var t=document.getElementById("toast");t.innerHTML=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("show");},4200);}
 
+  function heldOn(di){var s=0;DAYS[di].items.forEach(function(it){if(it.kind==="pocket")s+=it.booked+it.building;});return s;}
+  function dormSizeOn(di){var s=0;DORMANT.forEach(function(x){if(x.di===di)s+=x.size;});return s;}
+  function gridStatic(boardId,fn){var html='<div class="grid">';for(var k=0;k<7;k++)html+='<div class="colh">'+COLH[k]+'</div>';DAYS.forEach(function(d){html+='<div class="day" data-day="'+d.idx+'"><div class="dhead"><span class="dnum">'+d.n+'</span><span class="ddow">'+d.dow+'</span></div>'+fn(d)+'</div>';});document.getElementById(boardId).innerHTML=html+'</div>';}
+  function renderBooked(){gridStatic("bookedBoard",function(d){
+    var h='',deps=d.items.filter(function(it){return it.kind==="book";});
+    deps.forEach(function(dep){
+      if(dep.pub)h+='<div class="bookcard pub"><span>'+dep.label.toUpperCase()+' · '+rng(dep.s,dep.e)+'</span><span class="seats">'+dep.seats+'/'+dep.cap+'</span></div>';
+      else h+='<div class="bookcard priv"><span>'+dep.label.toUpperCase()+' · '+rng(dep.s,dep.e)+'</span></div>';
+    });
+    if(!deps.length)h+='<div class="nothing">Nothing running</div>';
+    var held=heldOn(d.idx),dorm=dormSizeOn(d.idx);
+    if(held>0||dorm>0)h+='<div class="pill">› '+held+' held'+(dorm>0?' · '+dorm+' dormant':'')+'</div>';
+    return h;
+  });}
+  function renderDormant(){gridStatic("dormantBoard",function(d){
+    var ds=DORMANT.filter(function(x){return x.di===d.idx;});
+    if(!ds.length)return '<div class="emptydash">—</div>';
+    return ds.map(function(x){return '<div class="dormcard"><div class="dormtour">'+TOURS[x.tour].name.toUpperCase()+'</div><div class="dormname">'+x.name+' · '+x.size+'</div><div class="dormcold">cold '+x.cold+'d</div></div>';}).join('');
+  });}
+
   document.getElementById("undoBtn").onclick=function(){var ks=Object.keys(pm);if(ks.length){delete pm[ks[ks.length-1]];renderBoard();}};
   document.getElementById("clearBtn").onclick=function(){pm={};sel=null;seltip();renderBoard();};
   document.getElementById("createBtn").onclick=function(){var n=count();toast("<b>Prototype — nothing sent.</b> In the real system this drafts "+n+" offer"+(n===1?"":"s")+" into Tim\\u2019s approval queue; he approves each before any message goes out.");};
-  document.querySelectorAll(".tabs span").forEach(function(s){s.onclick=function(){document.querySelectorAll(".tabs span").forEach(function(x){x.classList.remove("on");});s.classList.add("on");var tb=s.getAttribute("data-tab");document.getElementById("planning").style.display=tb==="planning"?"block":"none";document.getElementById("holding").style.display=tb==="holding"?"block":"none";document.getElementById("dormant").style.display=tb==="dormant"?"block":"none";};});
+  document.querySelectorAll(".tabs span").forEach(function(s){s.onclick=function(){document.querySelectorAll(".tabs span").forEach(function(x){x.classList.remove("on");});s.classList.add("on");var tb=s.getAttribute("data-tab");document.getElementById("planning").style.display=tb==="planning"?"block":"none";document.getElementById("booked").style.display=tb==="booked"?"block":"none";document.getElementById("dormant").style.display=tb==="dormant"?"block":"none";if(tb==="booked")renderBooked();if(tb==="dormant")renderDormant();};});
   document.querySelectorAll(".seg button").forEach(function(bn){bn.onclick=function(){if(bn.getAttribute("data-view")==="list")toast("List = your current board. This prototype is the new Plan calendar.");};});
   renderBoard();
 })();
