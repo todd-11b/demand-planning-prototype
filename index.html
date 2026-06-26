@@ -5,70 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>Demand Planning — calendar drag</title>
+<title>Demand Planning</title>
 <style>
   :root{
-    --ink:#1e1b4b;--ink2:#4b5563;--muted:#9ca3af;--line:#e7e7ee;--bg:#f6f6fb;--card:#fff;
-    --green:#16a34a;--greenbg:#e9f7ef;--amber:#e08a1e;--gray:#9ca3af;--red:#dc2626;
-    --bbq:#d9772e;--ghost:#7c3aed;--brewery:#2563eb;--winery:#9d174d;--sightseeing:#15803d;
-    --booked:#3f3f46;--track:#ececf2;--sel:#7c3aed;--selbg:#f3f0ff;
+    --ink:#1f2233;--ink2:#5b6072;--muted:#9aa0ad;--line:#e8e8ee;--bg:#f7f7fa;--card:#fff;
+    --accent:#5b54d6;--accentbg:#eeedfb;--booked:#3a3d4d;--build:#cdcdd6;--track:#eeeef3;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
   .wrap{max-width:1340px;margin:0 auto;padding:0 20px 90px}
-  .proto{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 14px;margin:14px 0;font-size:13px}
+  .proto{background:#f1f1f6;border:1px solid var(--line);color:var(--ink2);border-radius:8px;padding:8px 13px;margin:14px 0;font-size:12.5px}
   .top{display:flex;align-items:center;gap:22px;padding:14px 0 6px}
-  .brand{font-weight:800;letter-spacing:.06em;font-size:22px}
-  .tabs{display:flex;gap:18px;font-size:16px}.tabs span{color:var(--muted)}.tabs span.on{color:var(--ink);font-weight:600}
+  .brand{font-weight:800;letter-spacing:.05em;font-size:21px}
+  .tabs{display:flex;gap:18px;font-size:15px}.tabs span{color:var(--muted)}.tabs span.on{color:var(--ink);font-weight:600}
   .range{margin-left:auto;display:flex;align-items:center;gap:12px;font-weight:600}
-  .nav{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink2);font-size:15px}
-  .toolbar{display:flex;align-items:center;gap:16px;padding:8px 0 4px;flex-wrap:wrap}
-  .seg{display:inline-flex;background:#eceaf3;border-radius:999px;padding:3px}
+  .nav{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink2)}
+  .toolbar{display:flex;align-items:center;gap:16px;padding:6px 0}
+  .seg{display:inline-flex;background:#ececf1;border-radius:999px;padding:3px}
   .seg button{border:0;background:transparent;border-radius:999px;padding:6px 18px;font-size:14px;color:var(--ink2);font-weight:500;cursor:pointer}
-  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
-  .legend{margin-left:auto;display:flex;gap:14px;font-size:13px;color:var(--ink2);flex-wrap:wrap}
-  .lg{display:inline-flex;align-items:center;gap:6px}.sw{width:22px;height:12px;border-radius:3px}
-  .sw.committed{background:var(--green)}.sw.pending{background:transparent;border:1.5px dashed var(--ghost)}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .howto{background:#f3f0ff;border:1px solid #e0d8ff;border-radius:10px;padding:10px 14px;margin:12px 0 14px;color:#4b3a8f;font-size:13.5px}
-  .howto b{font-weight:600;color:var(--ink)}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .howto{color:var(--ink2);font-size:13.5px;margin:8px 0 16px}.howto b{color:var(--ink);font-weight:600}
   .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;align-items:start}
-  .colh{text-align:center;color:var(--ghost);font-weight:700;letter-spacing:.08em;font-size:12px}
-  .day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:120px}
-  .day.empty{background:#fbfbfe}
-  .day.drop{border:2px dashed var(--sel);background:var(--selbg)}
-  .dhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .dnum{font-size:24px;font-weight:700}.ddow{font-size:11px;color:var(--muted);letter-spacing:.1em;font-weight:600}
+  .colh{text-align:center;color:var(--muted);font-weight:600;letter-spacing:.06em;font-size:11.5px}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;min-height:118px}
+  .day.empty{background:#fbfbfd}
+  .day.drop{border:2px solid var(--accent);background:var(--accentbg)}
+  .dhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .dnum{font-size:23px;font-weight:700}.ddow{font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:600}
   .nodemand{color:var(--muted);font-style:italic;font-size:12.5px}
-  .block{border-radius:8px;padding:6px 9px;margin-bottom:7px;font-size:12px;display:flex;justify-content:space-between;font-weight:600}
-  .block.committed{background:var(--greenbg);color:#15803d}
-  .block.pending{border:1.5px dashed #c4b5fd;background:#faf8ff;color:#6d28d9;display:block}
-  .block.pending .note{font-weight:400;color:#8b7fb0;font-size:11px;margin-top:1px}
-  .pk{margin-bottom:11px}
-  .pkrow{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-  .pname{font-weight:700;font-size:12.5px;text-transform:uppercase}
-  .pcnt{margin-left:auto;font-weight:700;font-size:12.5px}.pcnt .up{color:var(--green)}.pcnt .dn{color:var(--muted)}
+  .ctx{color:var(--muted);font-size:11.5px;margin-bottom:7px}
+  .pk{margin-bottom:13px}
+  .pkrow{display:flex;align-items:center;margin-bottom:5px}
+  .pname{font-weight:700;font-size:12.5px;letter-spacing:.02em}
+  .pcnt{margin-left:auto;font-weight:700;font-size:12.5px}.pcnt .up{color:var(--accent)}.pcnt .dn{color:var(--muted)}
   .bar{height:6px;border-radius:4px;background:var(--track);overflow:hidden;display:flex;margin-bottom:6px}.bar i{display:block;height:100%}
-  .nobus{color:var(--red);font-size:11px;font-weight:600;margin:-2px 0 6px}
-  .grp{display:flex;align-items:center;gap:7px;border:1px solid #e3e4ec;border-radius:8px;padding:6px 8px;margin-top:5px;background:#fff;font-size:12.5px}
+  .nobus{color:var(--muted);font-size:11px;margin:-2px 0 6px}
+  .ifacc{font-size:11px;margin:1px 0 0;color:var(--ink2)}
+  .grp{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;margin-top:5px;background:#fff;font-size:12.5px}
   .grp .gn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .grp .gsz{margin-left:auto;font-weight:700}
-  .grp.move{cursor:grab}.grp.move:hover{border-color:#c7d2fe;background:#fafaff}.grp.move:active{cursor:grabbing}
-  .grp.sel{border:2px solid var(--sel);background:var(--selbg)}
-  .grp.paid{background:#f6f7f9;color:var(--ink2)}
-  .grp.away{opacity:.5;border-style:dashed}
-  .grp.inc{background:#f1fdf6;border:1px dashed #bbf7d0;color:#15803d}
-  .hdl{color:#b9bed6;font-size:12px;letter-spacing:-2px;user-select:none}
-  .pin{font-size:9px;font-weight:700;color:#6b7280;border:1px solid #d1d5db;border-radius:4px;padding:0 4px}
-  .tag{font-size:10px;font-weight:600;color:var(--sel)}
-  .ifacc{font-size:11px;font-weight:600;margin:2px 0 0}.ifacc.ok{color:var(--green)}.ifacc.no{color:var(--amber)}
-  #bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 22px;display:none;align-items:center;gap:16px;z-index:40;box-shadow:0 -4px 18px rgba(0,0,0,.06)}
+  .grp .gsz{margin-left:auto;font-weight:700;color:var(--ink)}
+  .grp.move{cursor:grab}.grp.move:hover{border-color:var(--accent)}.grp.move:active{cursor:grabbing}
+  .grp.sel{border:2px solid var(--accent);background:var(--accentbg)}
+  .grp.paid{color:var(--muted);background:#fafafc}
+  .grp.away{opacity:.45;border-style:dashed}
+  .grp.inc{background:var(--accentbg);border:1px dashed var(--accent);color:var(--accent)}
+  .hdl{color:#c4c6d2;font-size:12px;letter-spacing:-2px;user-select:none}
+  .pin{font-size:9px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+  .tag{font-size:10px;font-weight:600;color:var(--accent)}
+  #bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 22px;display:none;align-items:center;gap:16px;z-index:40}
   #bar.show{display:flex}
   .bl{font-weight:700}.bs{color:var(--ink2);font-size:12.5px}
   .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
   .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.ghost{color:var(--ink2)}
   .br{margin-left:auto;display:flex;gap:10px}
-  #toast{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:#15803d;color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;z-index:50;display:none;max-width:680px}
+  #toast{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;z-index:50;display:none;max-width:640px}
   #toast.show{display:block}
   #seltip{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:9px 18px;font-size:13px;z-index:50;display:none}
   #seltip.show{display:block}
@@ -79,24 +69,15 @@
 <body>
 <div class="wrap">
   <h2 class="sr">Demand planning calendar — drag a group from one day onto another day to combine scattered demand into a tour that fills.</h2>
-  <div class="proto"><b>Prototype</b> · sample data, anonymized · nothing here is live — drag or tap freely, you can't break anything.</div>
+  <div class="proto">Prototype · sample data, anonymized · nothing here is live.</div>
   <div class="top">
     <div class="brand">DEMAND</div>
     <div class="tabs"><span data-tab="holding">Holding</span><span class="on" data-tab="planning">Planning</span><span data-tab="dormant">Dormant</span></div>
     <div class="range"><button class="nav">‹</button><span>Jun 28 – Jul 11</span><button class="nav">›</button></div>
   </div>
   <div id="planning">
-    <div class="toolbar">
-      <div class="seg"><button data-view="list">List</button><button class="on" data-view="plan">Plan</button></div>
-      <div class="legend">
-        <span class="lg"><span class="sw committed"></span>Bus committed</span>
-        <span class="lg"><span class="sw pending"></span>Private pending</span>
-        <span class="lg"><span class="dot" style="background:var(--amber)"></span>Close</span>
-        <span class="lg"><span class="dot" style="background:var(--gray)"></span>Weak</span>
-        <span class="lg"><span class="dot" style="background:var(--red)"></span>No bus</span>
-      </div>
-    </div>
-    <div class="howto"><b>Drag a group from one day onto another day</b> to combine them (same tour). The day you drop on goes up — the group stays put until the customer says yes. <span style="color:#6d5bbf">Or tap a group, then tap a day.</span></div>
+    <div class="toolbar"><div class="seg"><button data-view="list">List</button><button class="on" data-view="plan">Plan</button></div></div>
+    <div class="howto"><b>Drag a group from one day onto another day</b> to combine them (same tour). The day you drop on goes up; the group stays put until the customer says yes. Or tap a group, then tap a day.</div>
     <div id="board"></div>
   </div>
   <div id="holding" class="stub" style="display:none">Holding and Dormant are separate tabs in the full build. This prototype is the <b>Planning</b> calendar.</div>
@@ -108,58 +89,42 @@
 
 <script>
 (function(){
-  var TOURS={bbq:{name:"BBQ",c:"#d9772e"},ghost:{name:"Ghost",c:"#7c3aed"},brewery:{name:"Brewery",c:"#2563eb"},winery:{name:"Winery",c:"#9d174d"},sightseeing:{name:"Sightseeing",c:"#15803d"}};
+  var TOURS={bbq:"BBQ",ghost:"Ghost",brewery:"Brewery",winery:"Winery",sightseeing:"Sightseeing"};
   var POOL=["Jordan M","Priya N","Tom Hale","Dana R","Meg L","Joe P","Sam K","Alex T","Liz W","Cara B","Nia F","Ray O","Kim S","Ben H","Tess V","Gwen L","Owen P","Dean W","Lara P","Iris C","Cole R","Mara J","Nico A","Vera S"];
   var ni=0,pid=0;
   function nm(){return POOL[(ni++)%POOL.length];}
   function sizes(t){var o=[],r=t,pat=[3,2,4,2,1,3],i=0;while(r>0){var s=Math.min(r,pat[i%pat.length]);if(r-s===1)s=r;o.push(s);r-=s;i++;}return o;}
   function pk(tour,booked,building,opt){opt=opt||{};var ps=[];sizes(booked).forEach(function(s){ps.push({id:"g"+(pid++),name:nm(),size:s,paid:true,tour:tour});});sizes(building).forEach(function(s){ps.push({id:"g"+(pid++),name:nm(),size:s,paid:false,tour:tour});});return{kind:"pocket",tour:tour,parties:ps,noBus:!!opt.noBus};}
-  function c(l,b){return{kind:"committed",label:l,bus:b};}
-  function pend(l,n){return{kind:"pending",label:l,note:n};}
+  function ctx(l){return{kind:"ctx",label:l};}
 
   var DAYS=[
-    {n:28,dow:"SUN",items:[c("Private · 6 PM","Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
+    {n:28,dow:"SUN",items:[ctx("Private · 6 PM · Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
     {n:29,dow:"MON",items:[pk("bbq",0,2)]},
     {n:30,dow:"TUE",items:[]},
     {n:1,dow:"WED",items:[pk("bbq",0,3),pk("sightseeing",0,2)]},
     {n:2,dow:"THU",items:[pk("bbq",1,3),pk("ghost",0,2)]},
     {n:3,dow:"FRI",items:[pk("ghost",2,7),pk("brewery",0,5),pk("bbq",0,5)]},
-    {n:4,dow:"SAT",items:[c("Winery · 12 PM","✓"),c("Private · 7 PM","Bus 3"),pend("Private · pending · 9 PM","unpaid link"),pk("brewery",2,6),pk("ghost",3,7,{noBus:true}),pk("bbq",2,4)]},
+    {n:4,dow:"SAT",items:[ctx("Winery · 12 PM · Bus 5"),ctx("Private · 7 PM · Bus 3"),pk("brewery",2,6),pk("ghost",3,7,{noBus:true}),pk("bbq",2,4)]},
     {n:5,dow:"SUN",items:[pk("bbq",2,6),pk("brewery",1,5),pk("winery",0,3)]},
     {n:6,dow:"MON",items:[]},
     {n:7,dow:"TUE",items:[pk("bbq",0,2)]},
     {n:8,dow:"WED",items:[pk("ghost",0,3)]},
     {n:9,dow:"THU",items:[pk("bbq",0,4),pk("sightseeing",0,2)]},
     {n:10,dow:"FRI",items:[pk("ghost",1,5),pk("brewery",2,5),pk("bbq",0,5)]},
-    {n:11,dow:"SAT",items:[c("Winery · 12 PM","✓"),c("Private · 6 PM","Bus 1"),pk("brewery",2,7),pk("ghost",1,6),pk("bbq",0,5)]}
+    {n:11,dow:"SAT",items:[ctx("Winery · 12 PM · Bus 5"),ctx("Private · 6 PM · Bus 1"),pk("brewery",2,7),pk("ghost",1,6),pk("bbq",0,5)]}
   ];
   var PARTY={};
   DAYS.forEach(function(d,i){d.idx=i;d.items.forEach(function(it){if(it.kind==="pocket"){it.parties.forEach(function(p){p.originDay=i;PARTY[p.id]=p;});}});});
 
-  var moves={}; // groupId -> targetDayIdx
-  var sel=null;
+  var moves={},sel=null;
   var COLH=["SUN","MON","TUE","WED","THU","FRI","SAT"];
-  function dlabel(i){return DAYS[i].dow.charAt(0)+DAYS[i].dow.slice(1).toLowerCase()+" "+DAYS[i].n;}
   function shortDay(i){return DAYS[i].dow.charAt(0)+DAYS[i].dow.slice(1).toLowerCase()+" "+DAYS[i].n;}
-  function awayAt(p){return moves[p.id]!=null && moves[p.id]!==p.originDay;}
-
-  function toursOn(di){
-    var set=[],seen={};
-    DAYS[di].items.forEach(function(it){if(it.kind==="pocket"&&!seen[it.tour]){seen[it.tour]=1;set.push(it.tour);}});
-    for(var gid in moves){if(moves[gid]===di){var t=PARTY[gid].tour;if(!seen[t]){seen[t]=1;set.push(t);}}}
-    return set;
-  }
+  function awayAt(p){return moves[p.id]!=null&&moves[p.id]!==p.originDay;}
+  function toursOn(di){var set=[],seen={};DAYS[di].items.forEach(function(it){if(it.kind==="pocket"&&!seen[it.tour]){seen[it.tour]=1;set.push(it.tour);}});for(var g in moves){if(moves[g]===di){var t=PARTY[g].tour;if(!seen[t]){seen[t]=1;set.push(t);}}}return set;}
   function origPocket(di,tour){var r=null;DAYS[di].items.forEach(function(it){if(it.kind==="pocket"&&it.tour===tour)r=it;});return r;}
-  // parties present at (day,tour) after planned moves
-  function present(di,tour){
-    var res=[];var op=origPocket(di,tour);
-    if(op)op.parties.forEach(function(p){if(!awayAt(p))res.push(p);});
-    for(var gid in moves){if(moves[gid]===di){var p=PARTY[gid];if(p.tour===tour)res.push(p);}}
-    return res;
-  }
+  function present(di,tour){var res=[],op=origPocket(di,tour);if(op)op.parties.forEach(function(p){if(!awayAt(p))res.push(p);});for(var g in moves){if(moves[g]===di){var p=PARTY[g];if(p.tour===tour)res.push(p);}}return res;}
   function sum(a){var s=0;a.forEach(function(p){s+=p.size;});return s;}
-
-  function bar(booked,building){var thr=10,bk=Math.min(booked,thr),bl=Math.max(0,Math.min(building,thr-bk)),tt=booked+building,col=tt>=6?"var(--amber)":"var(--gray)";return '<div class="bar"><i style="width:'+(bk/thr*100)+'%;background:var(--booked)"></i><i style="width:'+(bl/thr*100)+'%;background:'+col+'"></i></div>';}
+  function bar(booked,building){var thr=10,bk=Math.min(booked,thr),bl=Math.max(0,Math.min(building,thr-bk));return '<div class="bar"><i style="width:'+(bk/thr*100)+'%;background:var(--booked)"></i><i style="width:'+(bl/thr*100)+'%;background:var(--build)"></i></div>';}
 
   function grpCard(p,state,extra){
     var cls="grp"+(state==='away'?' away':state==='inc'?' inc':p.paid?' paid':' move')+(sel===p.id?' sel':'');
@@ -168,41 +133,26 @@
     var right=p.paid?'<span class="pin">PAID</span>':(extra?'<span class="tag">'+extra+'</span>':'');
     return '<div class="'+cls+'" data-grp="'+p.id+'"'+drag+'>'+hdl+'<span class="gn">'+p.name+'</span>'+right+'<span class="gsz">'+p.size+'</span></div>';
   }
-
   function pocketHtml(di,tour){
-    var op=origPocket(di,tour);
-    var realParties=op?op.parties:[];
-    var realCnt=sum(realParties);
-    var pres=present(di,tour);
-    var proj=sum(pres);
-    var bookedP=sum(pres.filter(function(p){return p.paid;})), buildP=sum(pres.filter(function(p){return !p.paid;}));
-    var t=TOURS[tour];
+    var op=origPocket(di,tour),realParties=op?op.parties:[],realCnt=sum(realParties);
+    var pres=present(di,tour),proj=sum(pres);
+    var bookedP=sum(pres.filter(function(p){return p.paid;})),buildP=sum(pres.filter(function(p){return !p.paid;}));
     var cntHtml=(realCnt!==proj)?(realCnt+' <span class="'+(proj>realCnt?'up':'dn')+'">→ '+proj+'</span>'):proj;
-    var h='<div class="pk"><div class="pkrow"><span class="dot" style="background:'+t.c+'"></span><span class="pname" style="color:'+t.c+'">'+t.name+'</span><span class="pcnt">'+cntHtml+'/10</span></div>';
+    var h='<div class="pk"><div class="pkrow"><span class="pname">'+TOURS[tour]+'</span><span class="pcnt">'+cntHtml+'/10</span></div>';
     h+=bar(bookedP,buildP);
-    if(op&&op.noBus&&!awayAllGone(op))h+='<div class="nobus">no bus</div>';
-    if(realCnt!==proj){var full=proj>=10;h+='<div class="ifacc '+(full?'ok':'no')+'">'+(full?'reaches 10 — runnable':((10-proj>0?(10-proj)+' to go':'full'))+' · if accepted')+'</div>';}
-    // cards: originals (here or moved-away), then incoming
-    realParties.forEach(function(p){
-      if(awayAt(p))h+=grpCard(p,'away','→ '+shortDay(moves[p.id]));
-      else h+=grpCard(p,null,null);
-    });
-    for(var gid in moves){if(moves[gid]===di){var p=PARTY[gid];if(p.tour===tour&&p.originDay!==di)h+=grpCard(p,'inc','from '+shortDay(p.originDay));}}
+    if(op&&op.noBus&&!op.parties.every(function(p){return awayAt(p);}))h+='<div class="nobus">no bus</div>';
+    if(realCnt!==proj){var full=proj>=10;h+='<div class="ifacc">'+(full?'fills at 10 if accepted':(10-proj>0?(10-proj)+' to go if accepted':'')) +'</div>';}
+    realParties.forEach(function(p){if(awayAt(p))h+=grpCard(p,'away','→ '+shortDay(moves[p.id]));else h+=grpCard(p,null,null);});
+    for(var g in moves){if(moves[g]===di){var p=PARTY[g];if(p.tour===tour&&p.originDay!==di)h+=grpCard(p,'inc','from '+shortDay(p.originDay));}}
     return h+'</div>';
   }
-  function awayAllGone(op){return op.parties.every(function(p){return awayAt(p);});}
-
   function renderBoard(){
     var html='<div class="grid">';
     for(var k=0;k<7;k++)html+='<div class="colh">'+COLH[k]+'</div>';
     DAYS.forEach(function(d){
-      var tours=toursOn(d.idx);
-      var hasContent=d.items.length>0||tours.length>0;
+      var tours=toursOn(d.idx),hasContent=d.items.length>0||tours.length>0;
       html+='<div class="day'+(hasContent?'':' empty')+'" data-day="'+d.idx+'"><div class="dhead"><span class="dnum">'+d.n+'</span><span class="ddow">'+d.dow+'</span></div>';
-      d.items.forEach(function(it){
-        if(it.kind==="committed")html+='<div class="block committed"><span>'+it.label+'</span><span>'+it.bus+'</span></div>';
-        else if(it.kind==="pending")html+='<div class="block pending"><span>'+it.label+' ⚠</span><div class="note">'+it.note+'</div></div>';
-      });
+      d.items.forEach(function(it){if(it.kind==="ctx")html+='<div class="ctx">'+it.label+'</div>';});
       tours.forEach(function(t){html+=pocketHtml(d.idx,t);});
       if(!hasContent)html+='<div class="nodemand">No public demand</div>';
       html+='</div>';
@@ -210,7 +160,6 @@
     document.getElementById("board").innerHTML=html+'</div>';
     wire();syncBar();
   }
-
   function wire(){
     var b=document.getElementById("board");
     b.querySelectorAll('.grp[draggable="true"]').forEach(function(el){
@@ -221,29 +170,20 @@
       var di=+day.getAttribute("data-day");
       day.addEventListener("dragover",function(e){e.preventDefault();day.classList.add("drop");});
       day.addEventListener("dragleave",function(){day.classList.remove("drop");});
-      day.addEventListener("drop",function(e){e.preventDefault();day.classList.remove("drop");var g=e.dataTransfer.getData("text/plain");applyMove(g,di);});
+      day.addEventListener("drop",function(e){e.preventDefault();day.classList.remove("drop");applyMove(e.dataTransfer.getData("text/plain"),di);});
       day.addEventListener("click",function(){if(sel)applyMove(sel,di);});
     });
   }
-  function applyMove(gid,di){
-    var p=PARTY[gid];if(!p||p.paid){sel=null;seltip();return;}
-    if(di===p.originDay)delete moves[gid]; else moves[gid]=di;
-    sel=null;seltip();renderBoard();
-    var c=count();if(c>0)toast("",false,true); // refresh bar only
-  }
+  function applyMove(g,di){var p=PARTY[g];if(!p||p.paid){sel=null;seltip();return;}if(di===p.originDay)delete moves[g];else moves[g]=di;sel=null;seltip();renderBoard();}
   function count(){return Object.keys(moves).length;}
   function seltip(){var t=document.getElementById("seltip");if(sel){var p=PARTY[sel];t.textContent="Holding "+p.name+" ("+p.size+") — tap a day to move them";t.classList.add("show");}else t.classList.remove("show");}
   function syncBar(){var b=document.getElementById("bar");document.getElementById("barCount").textContent=count()+" planned move"+(count()===1?"":"s");if(count()>0)b.classList.add("show");else b.classList.remove("show");}
-
-  var tt;
-  function toast(msg,warn,silent){if(silent){return;}var t=document.getElementById("toast");t.innerHTML=msg;t.style.background=warn?"#b45309":"#15803d";t.classList.add("show");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("show");},4200);}
-
+  var tt;function toast(m){var t=document.getElementById("toast");t.innerHTML=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("show");},4200);}
   document.getElementById("undoBtn").onclick=function(){var ks=Object.keys(moves);if(ks.length){delete moves[ks[ks.length-1]];renderBoard();}};
   document.getElementById("clearBtn").onclick=function(){moves={};sel=null;seltip();renderBoard();};
-  document.getElementById("createBtn").onclick=function(){var n=count();toast("<b>Prototype — nothing sent.</b> In the real system this drafts "+n+" offer"+(n===1?"":"s")+" (one per group) into Tim\\u2019s approval queue; he approves each before any message goes out.");};
+  document.getElementById("createBtn").onclick=function(){var n=count();toast("<b>Prototype — nothing sent.</b> This would draft "+n+" offer"+(n===1?"":"s")+" into Tim\\u2019s approval queue; he approves each before any message goes out.");};
   document.querySelectorAll(".tabs span").forEach(function(s){s.onclick=function(){document.querySelectorAll(".tabs span").forEach(function(x){x.classList.remove("on");});s.classList.add("on");var tb=s.getAttribute("data-tab");document.getElementById("planning").style.display=tb==="planning"?"block":"none";document.getElementById("holding").style.display=tb==="holding"?"block":"none";document.getElementById("dormant").style.display=tb==="dormant"?"block":"none";};});
   document.querySelectorAll(".seg button").forEach(function(bn){bn.onclick=function(){if(bn.getAttribute("data-view")==="list")toast("List = your current board. This prototype is the new Plan calendar.");};});
-
   renderBoard();
 })();
 </script>
