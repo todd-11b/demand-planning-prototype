@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demand Planning — prototype</title>
+<style>
+  :root{
+    --ink:#1e1b4b; --ink2:#4b5563; --muted:#9ca3af; --line:#e7e7ee; --bg:#f6f6fb; --card:#ffffff;
+    --green:#16a34a; --greenbg:#e9f7ef; --amber:#e08a1e; --gray:#9ca3af; --red:#dc2626; --redbg:#fdecec;
+    --bbq:#d9772e; --ghost:#7c3aed; --brewery:#2563eb; --winery:#9d174d; --sightseeing:#15803d;
+    --booked:#3f3f46; --track:#ececf2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 22px 60px}
+  .proto{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 14px;margin:14px 0;font-size:13px;display:flex;gap:8px;align-items:center}
+  .proto b{font-weight:600}
+  .top{display:flex;align-items:center;gap:22px;padding:16px 0 6px}
+  .brand{font-weight:800;letter-spacing:.06em;font-size:22px;color:var(--ink)}
+  .tabs{display:flex;gap:18px;font-size:16px}
+  .tabs span{color:var(--muted);cursor:pointer}
+  .tabs span.on{color:var(--ink);font-weight:600}
+  .range{margin-left:auto;display:flex;align-items:center;gap:12px;font-weight:600;color:var(--ink)}
+  .nav{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;color:var(--ink2);font-size:15px}
+  .toolbar{display:flex;align-items:center;gap:16px;padding:8px 0 4px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:#eceaf3;border-radius:999px;padding:3px}
+  .seg button{border:0;background:transparent;border-radius:999px;padding:6px 18px;font-size:14px;cursor:pointer;color:var(--ink2);font-weight:500}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .hint{color:var(--ink2);font-size:14px}
+  .legend{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink2);flex-wrap:wrap}
+  .lg{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:22px;height:12px;border-radius:3px;display:inline-block}
+  .sw.committed{background:var(--green)}
+  .sw.pending{background:transparent;border:1.5px dashed var(--ghost)}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .sub{color:var(--ink2);font-size:14px;margin:12px 0 10px}
+  .sub b{color:var(--ink);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
+  .colh{text-align:center;color:var(--ghost);font-weight:700;letter-spacing:.08em;font-size:12px;padding-bottom:2px}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 16px;min-height:120px;cursor:pointer;transition:box-shadow .12s,border-color .12s}
+  .day:hover{box-shadow:0 4px 18px rgba(30,27,75,.08);border-color:#d9d9e6}
+  .day.empty{cursor:default;background:#fbfbfe}
+  .day.empty:hover{box-shadow:none;border-color:var(--line)}
+  .dhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .dnum{font-size:26px;font-weight:700;color:var(--ink)}
+  .ddow{font-size:11px;color:var(--muted);letter-spacing:.1em;font-weight:600}
+  .nodemand{color:var(--muted);font-style:italic;font-size:13px}
+  .block{border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+  .block.committed{background:var(--greenbg);color:#15803d}
+  .block.committed .b2{color:#15803d;font-weight:600;opacity:.85}
+  .block.pending{border:1.5px dashed #c4b5fd;background:#faf8ff;color:#6d28d9;display:block}
+  .block.pending .note{font-weight:400;color:#8b7fb0;font-size:11.5px;margin-top:2px}
+  .pocket{margin-bottom:12px}
+  .prow{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .pname{font-weight:700;letter-spacing:.02em;font-size:13px;text-transform:uppercase}
+  .pcount{margin-left:auto;font-weight:700;font-size:13px;color:var(--ink)}
+  .bar{height:7px;border-radius:4px;background:var(--track);overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .meta{font-size:12px;color:var(--ink2);margin-top:5px}
+  .togo{font-size:12px;font-weight:600;margin-top:3px}
+  .alarm{background:var(--redbg);color:var(--red);border-radius:7px;padding:5px 8px;font-size:12px;font-weight:600;margin-top:6px;line-height:1.35}
+  .steer{color:var(--brewery);font-size:12px;font-weight:600;margin-top:6px;cursor:default}
+  .more{grid-column:auto;background:#f1f0f8;border-radius:8px;text-align:center;color:var(--ink2);font-size:12px;padding:6px;margin-top:6px}
+  /* workspace */
+  #workspace{display:none}
+  .ws-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
+  .back{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink)}
+  .ws-title{font-size:20px;font-weight:700}
+  .ws-sub{color:var(--ink2);font-size:13px;margin:2px 0 14px}
+  .ws-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:20px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h3{margin:0 0 4px;font-size:15px;font-weight:700}
+  .panel .ph{color:var(--ink2);font-size:12.5px;margin:0 0 14px}
+  .target{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:12px}
+  .target.drop{border:2px dashed var(--brewery);background:#f3f7ff}
+  .target.full{border-color:#bbf7d0;background:#f3fcf6}
+  .tgt-head{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .proj{margin-left:auto;font-weight:700;font-size:13px}
+  .proj .up{color:var(--green)}
+  .ifacc{font-size:11.5px;color:var(--green);font-weight:600;margin-top:5px}
+  .parties{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;background:#fff;display:inline-flex;align-items:center;gap:6px}
+  .chip.paid{background:#f3f4f6;color:var(--ink2)}
+  .chip .pd{font-size:9.5px;font-weight:700;letter-spacing:.05em;color:#6b7280;border:1px solid #d1d5db;border-radius:4px;padding:0 4px}
+  .chip.move{border-color:#c7d2fe;background:#eef2ff;color:#3730a3;cursor:grab}
+  .chip.move:active{cursor:grabbing}
+  .chip.planned{opacity:.5;text-decoration:line-through}
+  .hold .chip{cursor:grab;border-color:#c7d2fe;background:#eef2ff;color:#3730a3;margin-bottom:0}
+  .hold .grp{margin-bottom:14px}
+  .hold .glabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:6px}
+  .handle{color:#a5b4fc;font-size:13px}
+  .empty-hold{color:var(--muted);font-size:13px;font-style:italic}
+  /* tray */
+  #tray{display:none;margin-top:20px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;align-items:center;gap:16px}
+  #tray.show{display:flex}
+  .tray-l{font-weight:700;font-size:14px}
+  .tray-sub{color:var(--ink2);font-size:12.5px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.ghost{color:var(--ink2)}
+  .tray-r{margin-left:auto;display:flex;gap:10px}
+  #toast{display:none;margin-top:14px;background:var(--greenbg);border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:11px 15px;font-size:13px}
+  #toast.show{display:block}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .stub{padding:40px;text-align:center;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="sr">Demand planning prototype — a read-only calendar of public tour demand for the next 14 days; click a day to combine scattered groups onto a stronger date.</h2>
+
+  <div class="proto"><b>Prototype</b> · sample data · nothing here is live or connected — click and drag freely, you can't break anything.</div>
+
+  <div class="top">
+    <div class="brand">DEMAND</div>
+    <div class="tabs">
+      <span data-tab="holding">Holding</span>
+      <span class="on" data-tab="planning">Planning</span>
+      <span data-tab="dormant">Dormant</span>
+    </div>
+    <div class="range"><button class="nav" aria-label="Previous">‹</button><span>Jun 28 – Jul 11</span><button class="nav" aria-label="Next">›</button></div>
+  </div>
+
+  <div id="planning">
+    <div class="toolbar">
+      <div class="seg"><button data-view="list">List</button><button class="on" data-view="plan">Plan</button></div>
+      <div class="hint">Internal steering calendar · next 14 days · public tour demand, booked vs building</div>
+      <div class="legend">
+        <span class="lg"><span class="sw committed"></span>Bus committed</span>
+        <span class="lg"><span class="sw pending"></span>Private pending</span>
+        <span class="lg"><span class="dot" style="background:var(--amber)"></span>Close</span>
+        <span class="lg"><span class="dot" style="background:var(--gray)"></span>Weak</span>
+        <span class="lg"><span class="dot" style="background:var(--red)"></span>No bus</span>
+      </div>
+    </div>
+    <div class="sub">Each public slot splits <b>booked</b> (paid, solid bar) from <b>building</b> (movable demand, light bar); the empty bar is what's still needed. <b>Click a day</b> to open its roster and move guests.</div>
+
+    <div id="board"></div>
+    <div id="tray">
+      <div><div class="tray-l" id="trayCount">0 planned moves</div><div class="tray-sub">Nothing sends automatically. Drafts one offer per party into the approval queue — Tim approves each.</div></div>
+      <div class="tray-r"><button class="btn ghost" id="clearBtn">Clear planned</button><button class="btn primary" id="createBtn">Create offer proposals</button></div>
+    </div>
+    <div id="toast"></div>
+
+    <div id="workspace"></div>
+  </div>
+
+  <div id="holding" class="stub" style="display:none">Holding (active demand) and Dormant (recovery pool) are separate tabs in the full build. This prototype focuses on the <b>Planning</b> calendar — the new piece.</div>
+  <div id="dormant" class="stub" style="display:none">Dormant is a read-only recovery pool in the full build. This prototype focuses on the <b>Planning</b> calendar.</div>
+</div>
+
+<script>
+(function(){
+  var TOURS={bbq:{name:"BBQ",c:"var(--bbq)"},ghost:{name:"Ghost",c:"var(--ghost)"},brewery:{name:"Brewery",c:"var(--brewery)"},winery:{name:"Winery",c:"var(--winery)"},sightseeing:{name:"Sightseeing",c:"var(--sightseeing)"}};
+  var NAMES=["Reyes","Kim","Nguyen","Patel","Brooks","Hayes","Lopez","Carter","Diaz","Foster","Walsh","Greer","Mejia","Pruitt","Sandoval","Tate","Vance","Wells","Mora","Cobb"," Truong","Park","Shah","Ortiz"];
+  var nameI=0, pid=0;
+  function nm(){return NAMES[(nameI++)%NAMES.length].trim();}
+  function sizes(total){var out=[],r=total,pat=[4,3,2,2,3,4],i=0;while(r>0){var s=Math.min(r,pat[i%pat.length]);if(r-s===1)s=r;out.push(s);r-=s;i++;}return out;}
+  function parties(booked,building){var a=[];sizes(booked).forEach(function(s){a.push({id:"p"+(pid++),name:nm(),size:s,paid:true});});sizes(building).forEach(function(s){a.push({id:"p"+(pid++),name:nm(),size:s,paid:false});});return a;}
+  function pk(tour,booked,building,opt){opt=opt||{};return{kind:"pocket",tour:tour,booked:booked,building:building,noBus:!!opt.noBus,steer:opt.steer||null,parties:parties(booked,building)};}
+  function cm(label,bus){return{kind:"committed",label:label,bus:bus};}
+  function pend(label,note){return{kind:"pending",label:label,note:note};}
+
+  var DAYS=[
+    {n:28,dow:"SUN",items:[cm("Private · 6 PM","Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
+    {n:29,dow:"MON",items:[pk("bbq",0,2)]},
+    {n:30,dow:"TUE",items:[]},
+    {n:1,dow:"WED",items:[pk("bbq",0,3),pk("sightseeing",0,2,{steer:"Better fit: Ghost"})]},
+    {n:2,dow:"THU",items:[pk("bbq",1,3),pk("ghost",0,2)]},
+    {n:3,dow:"FRI",items:[pk("ghost",2,7),pk("brewery",0,5),pk("bbq",0,5)]},
+    {n:4,dow:"SAT",items:[cm("Winery · 12 PM","✓"),cm("Private · 7 PM","Bus 3"),pend("Private · pending · 9 PM","Unpaid link · could take the bus"),pk("brewery",2,6),pk("ghost",3,7,{noBus:true,steer:"7 building → Fri 3 Ghost · bus free"}),pk("bbq",2,4)]},
+    {n:5,dow:"SUN",items:[pk("bbq",2,6),pk("brewery",1,5),pk("winery",0,3)]},
+    {n:6,dow:"MON",items:[]},
+    {n:7,dow:"TUE",items:[pk("bbq",0,2)]},
+    {n:8,dow:"WED",items:[pk("ghost",0,3)]},
+    {n:9,dow:"THU",items:[pk("bbq",0,4),pk("sightseeing",0,2,{steer:"Better fit: Ghost"})]},
+    {n:10,dow:"FRI",items:[pk("ghost",1,5),pk("brewery",2,5),pk("bbq",0,5)]},
+    {n:11,dow:"SAT",items:[cm("Winery · 12 PM","✓"),cm("Private · 6 PM","Bus 1"),pk("brewery",2,7),pk("ghost",1,6),pk("bbq",0,5)]}
+  ];
+  DAYS.forEach(function(d,i){d.idx=i;d.items.forEach(function(it){if(it.kind==="pocket"){it.dayIdx=i;it.pocketId="d"+i+"-"+it.tour;}});});
+
+  var moves=[]; // {partyId, fromIdx, toPocketId, toIdx, tour, size, name}
+  var dragColh=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+  function tot(p){return p.booked+p.building;}
+  function plannedInto(pocketId){var s=0;moves.forEach(function(m){if(m.toPocketId===pocketId)s+=m.size;});return s;}
+  function isPlanned(partyId){return moves.some(function(m){return m.partyId===partyId;});}
+
+  function bar(booked,building,thr){
+    thr=thr||10;
+    var bk=Math.min(booked,thr), bl=Math.min(building,thr-bk), tt=booked+building;
+    var close=tt>=6;
+    var blColor=close?"var(--amber)":"var(--gray)";
+    var bkPct=bk/thr*100, blPct=bl/thr*100;
+    return '<div class="bar"><i style="width:'+bkPct+'%;background:var(--booked)"></i><i style="width:'+blPct+'%;background:'+blColor+'"></i></div>';
+  }
+
+  function pocketCard(it){
+    var t=TOURS[it.tour], tt=tot(it), close=tt>=6, togo=10-tt;
+    var h='<div class="pocket">';
+    h+='<div class="prow"><span class="dot" style="background:'+t.c+'"></span><span class="pname" style="color:'+t.c+'">'+t.name+'</span><span class="pcount">'+tt+'/10</span></div>';
+    h+=bar(it.booked,it.building);
+    h+='<div class="meta">'+(it.booked>0?(it.booked+' booked · '):'')+it.building+' building</div>';
+    if(it.noBus){
+      h+='<div class="alarm">'+it.booked+' booked · no bus assigned — resolve</div>';
+      if(it.steer) h+='<div class="steer">↗ '+it.steer+'</div>';
+    } else if(it.steer){
+      h+='<div class="steer">↗ '+it.steer+'</div>';
+    } else if(close && togo>0){
+      h+='<div class="togo" style="color:var(--amber)">'+togo+' to go</div>';
+    } else if(!close){
+      h+='<div class="togo" style="color:var(--gray)">weak</div>';
+    }
+    h+='</div>';
+    return h;
+  }
+
+  function renderBoard(){
+    var b=document.getElementById("board");
+    var html='<div class="grid">';
+    for(var c=0;c<7;c++) html+='<div class="colh">'+dragColh[c]+'</div>';
+    DAYS.forEach(function(d){
+      var hasPublic=d.items.some(function(x){return x.kind==="pocket";});
+      html+='<div class="day'+(d.items.length===0?' empty':'')+'" data-day="'+d.idx+'"'+(hasPublic?'':'')+'>';
+      html+='<div class="dhead"><span class="dnum">'+d.n+'</span><span class="ddow">'+d.dow+'</span></div>';
+      if(d.items.length===0){ html+='<div class="nodemand">No public demand</div>'; }
+      d.items.forEach(function(it){
+        if(it.kind==="committed") html+='<div class="block committed"><span>'+it.label+'</span><span class="b2">'+it.bus+'</span></div>';
+        else if(it.kind==="pending") html+='<div class="block pending"><span>'+it.label+' ⚠</span><div class="note">'+it.note+'</div></div>';
+        else html+=pocketCard(it);
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+    b.innerHTML=html;
+    Array.prototype.forEach.call(b.querySelectorAll(".day"),function(el){
+      var di=+el.getAttribute("data-day");
+      if(DAYS[di].items.some(function(x){return x.kind==="pocket";})){
+        el.addEventListener("click",function(){openDay(di);});
+      }
+    });
+  }
+
+  function openDay(idx){
+    var d=DAYS[idx];
+    document.getElementById("board").style.display="none";
+    document.getElementById("tray").style.display="none";
+    document.getElementById("toast").className="";
+    var ws=document.getElementById("workspace");
+    ws.style.display="block";
+    var tours={}; d.items.forEach(function(it){if(it.kind==="pocket")tours[it.tour]=true;});
+
+    var html='<div class="ws-head"><button class="back" id="backBtn">‹ Back to board</button><div><div class="ws-title">'+d.dow.charAt(0)+d.dow.slice(1).toLowerCase()+' '+monthOf(idx)+' '+d.n+'</div></div></div>';
+    html+='<div class="ws-sub">Drag a movable group from Holding onto a same-tour slot to fold it in. Paid guests are locked to their date. Nothing sends — you\'re simulating.</div>';
+    html+='<div class="ws-grid">';
+
+    html+='<div class="panel"><h3>'+d.n+' — public slots</h3><p class="ph">Drop a matching-tour group here to combine.</p>';
+    d.items.forEach(function(it){
+      if(it.kind!=="pocket") return;
+      var t=TOURS[it.tour], base=tot(it), added=plannedInto(it.pocketId), proj=base+added, full=proj>=10;
+      html+='<div class="target'+(full?' full':'')+'" data-pocket="'+it.pocketId+'" data-tour="'+it.tour+'">';
+      html+='<div class="tgt-head"><span class="dot" style="background:'+t.c+'"></span><span class="pname" style="color:'+t.c+'">'+t.name+'</span>';
+      html+='<span class="proj">'+(added>0?(base+' <span class="up">→ '+proj+'</span>'):base)+'/10</span></div>';
+      html+=bar(it.booked,it.building+added);
+      if(added>0) html+='<div class="ifacc">'+(full?'reaches 10 — runnable':((10-proj)+' to go')+' · if accepted')+'</div>';
+      html+='<div class="parties">';
+      it.parties.forEach(function(p){
+        if(p.paid) html+='<span class="chip paid">'+p.name+' · '+p.size+' <span class="pd">PAID</span></span>';
+        else html+='<span class="chip">'+p.name+' · '+p.size+'</span>';
+      });
+      html+='</div></div>';
+    });
+    html+='</div>';
+
+    html+='<div class="panel hold"><h3>Holding — movable demand</h3><p class="ph">Same-tour groups from across the 14 days. Drag one onto a slot at left.</p>';
+    var any=false;
+    Object.keys(tours).forEach(function(tk){
+      var chips="";
+      DAYS.forEach(function(od){
+        if(od.idx===idx) return;
+        od.items.forEach(function(it){
+          if(it.kind!=="pocket"||it.tour!==tk) return;
+          it.parties.forEach(function(p){
+            if(p.paid) return;
+            var planned=isPlanned(p.id);
+            chips+='<span class="chip move'+(planned?' planned':'')+'" draggable="'+(!planned)+'" data-pid="'+p.id+'" data-tour="'+tk+'" data-size="'+p.size+'" data-name="'+p.name+'" data-from="'+od.idx+'"><span class="handle">⠿</span>'+p.name+' · '+p.size+' <span style="color:var(--muted);font-size:10.5px">'+od.dow.charAt(0)+od.dow.slice(1).toLowerCase()+' '+od.n+'</span></span>';
+          });
+        });
+      });
+      if(chips){any=true;html+='<div class="grp"><div class="glabel">'+TOURS[tk].name+'</div><div class="parties">'+chips+'</div></div>';}
+    });
+    if(!any) html+='<div class="empty-hold">No movable same-tour demand elsewhere in the window.</div>';
+    html+='</div>';
+
+    html+='</div>';
+    if(moves.length>0) html+='<div style="margin-top:14px;text-align:right"><button class="btn ghost" id="undoBtn">Undo last move</button> <button class="btn" id="wsBackBtn">Done — back to board</button></div>';
+    ws.innerHTML=html;
+
+    document.getElementById("backBtn").addEventListener("click",closeDay);
+    var wb=document.getElementById("wsBackBtn"); if(wb) wb.addEventListener("click",closeDay);
+    var ub=document.getElementById("undoBtn"); if(ub) ub.addEventListener("click",function(){moves.pop();openDay(idx);syncTray();});
+    wireDrag(idx);
+    window.scrollTo(0,0);
+  }
+
+  function monthOf(idx){return DAYS[idx].n<=11&&idx>=7?"Jul":(DAYS[idx].n>=28?"Jun":"Jul");}
+
+  function wireDrag(idx){
+    var ws=document.getElementById("workspace");
+    Array.prototype.forEach.call(ws.querySelectorAll(".chip.move[draggable='true']"),function(ch){
+      ch.addEventListener("dragstart",function(e){e.dataTransfer.setData("text/plain",JSON.stringify({pid:ch.getAttribute("data-pid"),tour:ch.getAttribute("data-tour"),size:+ch.getAttribute("data-size"),name:ch.getAttribute("data-name"),from:+ch.getAttribute("data-from")}));});
+    });
+    Array.prototype.forEach.call(ws.querySelectorAll(".target"),function(tg){
+      tg.addEventListener("dragover",function(e){
+        var ok=tg.getAttribute("data-tour");
+        e.preventDefault();tg.classList.add("drop");
+      });
+      tg.addEventListener("dragleave",function(){tg.classList.remove("drop");});
+      tg.addEventListener("drop",function(e){
+        e.preventDefault();tg.classList.remove("drop");
+        var data;try{data=JSON.parse(e.dataTransfer.getData("text/plain"));}catch(x){return;}
+        if(data.tour!==tg.getAttribute("data-tour")){flash(tg,"Different tour — can only combine same-tour demand");return;}
+        if(isPlanned(data.pid))return;
+        moves.push({partyId:data.pid,fromIdx:data.from,toPocketId:tg.getAttribute("data-pocket"),toIdx:idx,tour:data.tour,size:data.size,name:data.name});
+        openDay(idx);syncTray();
+      });
+    });
+  }
+  function flash(el,msg){var o=el.style.borderColor;el.style.borderColor="var(--red)";setTimeout(function(){el.style.borderColor=o;},600);}
+
+  function syncTray(){
+    var t=document.getElementById("tray");
+    document.getElementById("trayCount").textContent=moves.length+" planned move"+(moves.length===1?"":"s");
+    if(moves.length>0 && document.getElementById("workspace").style.display!=="block") t.classList.add("show"); else t.classList.remove("show");
+  }
+
+  function closeDay(){
+    document.getElementById("workspace").style.display="none";
+    document.getElementById("board").style.display="block";
+    renderBoard();
+    if(moves.length>0) document.getElementById("tray").classList.add("show");
+    document.getElementById("tray").style.display="";
+    syncTray();
+  }
+
+  document.getElementById("createBtn").addEventListener("click",function(){
+    var n=moves.length;
+    var t=document.getElementById("toast");
+    t.innerHTML="<b>Prototype — nothing was sent.</b> In the real system this would draft "+n+" switch offer"+(n===1?"":"s")+" (one per group) into Tim's approval queue, and he'd approve each before any message goes out.";
+    t.className="show";
+  });
+  document.getElementById("clearBtn").addEventListener("click",function(){moves=[];document.getElementById("toast").className="";renderBoard();syncTray();});
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tabs span"),function(s){
+    s.addEventListener("click",function(){
+      Array.prototype.forEach.call(document.querySelectorAll(".tabs span"),function(x){x.classList.remove("on");});
+      s.classList.add("on");
+      var tab=s.getAttribute("data-tab");
+      document.getElementById("planning").style.display=tab==="planning"?"block":"none";
+      document.getElementById("holding").style.display=tab==="holding"?"block":"none";
+      document.getElementById("dormant").style.display=tab==="dormant"?"block":"none";
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button"),function(bn){
+    bn.addEventListener("click",function(){
+      Array.prototype.forEach.call(document.querySelectorAll(".seg button"),function(x){x.classList.remove("on");});
+      bn.classList.add("on");
+      if(bn.getAttribute("data-view")==="list"){alert("List = your current board. This prototype demonstrates the new Plan calendar.");bn.classList.remove("on");document.querySelector('.seg button[data-view="plan"]').classList.add("on");}
+    });
+  });
+
+  renderBoard();
+})();
+</script>
+</body>
+</html>
