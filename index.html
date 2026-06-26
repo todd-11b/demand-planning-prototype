@@ -49,6 +49,21 @@
   .dormname{color:#7a7f8c;font-size:13px;font-weight:600;margin-top:3px}
   .dormcold{color:var(--muted);font-size:11px;margin-top:4px}
   .emptydash{color:#d2d4dc;font-size:18px}
+  .pk.clickable{cursor:pointer}
+  #ov{display:none;position:fixed;inset:0;background:rgba(31,34,51,.42);z-index:60;align-items:flex-start;justify-content:center;overflow:auto;padding:60px 16px}
+  #ov.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:440px;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .mh{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .mh .mt{font-weight:700;font-size:17px}.mh .msub2{color:var(--muted);font-size:12.5px}
+  .mh .mx{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink2);align-self:center}
+  .msub{color:var(--muted);font-size:12.5px;margin:6px 0 14px}
+  .grow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:7px;font-size:13.5px}
+  .grow.goneRow{opacity:.5}
+  .grow .gnm{font-weight:500}
+  .grow .gp{font-size:9.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+  .grow .gfrom{font-size:10.5px;color:var(--accent);font-weight:600}
+  .grow .gsz{margin-left:auto;font-weight:700}
+  .grow .gw{color:var(--accent);font-weight:600;font-size:12px;cursor:pointer;background:none;border:0;white-space:nowrap}
   .book{border-radius:8px;padding:6px 9px;margin-bottom:7px;font-size:12px;background:var(--greenbg);color:#15803d;display:flex;justify-content:space-between;gap:8px;font-weight:600}
   .book .bk{opacity:.8;white-space:nowrap}
   .pk{border:1px solid transparent;border-radius:9px;padding:7px 8px;margin:0 -8px 6px;}
@@ -87,7 +102,6 @@
   </div>
   <div id="planning">
     <div class="toolbar">
-      <div class="seg"><button data-view="list">List</button><button class="on" data-view="plan">Plan</button></div>
       <div class="key">
         <span><i style="background:var(--drink1)"></i>Drink</span>
         <span><i style="background:var(--food)"></i>Food</span>
@@ -111,6 +125,7 @@
 </div>
 <div id="bar"><div><div class="bl" id="barCount">0 planned moves</div><div class="bs">Nothing sends. Each becomes one offer for Tim to approve.</div></div><div class="br"><button class="btn ghost" id="undoBtn">Undo</button><button class="btn ghost" id="clearBtn">Clear</button><button class="btn primary" id="createBtn">Create offer proposals</button></div></div>
 <div id="seltip"></div><div id="toast"></div>
+<div id="ov"><div class="modal" id="gmodal"></div></div>
 
 <script>
 (function(){
@@ -122,8 +137,10 @@
     sightseeing:{name:"Sightseeing",c:"var(--sight)",s:10,e:12}
   };
   var FLEET=["Bus 3","Bus 5","Bus 6"];
-  var ni=0;function sizes(t){var o=[],r=t,pat=[3,2,4,2,1,3],i=0;while(r>0){var s=Math.min(r,pat[i%pat.length]);if(r-s===1)s=r;o.push(s);r-=s;i++;}return o;}
-  function pk(tour,booked,building){return{kind:"pocket",tour:tour,booked:booked,building:building};}
+  var POOL=["Jordan M","Priya N","Tom Hale","Dana R","Meg L","Joe P","Sam K","Alex T","Liz W","Cara B","Nia F","Ray O","Kim S","Ben H","Tess V","Gwen L","Owen P","Dean W","Lara P","Iris C","Cole R","Mara J","Nico A","Vera S","Rosa T","Cy D","Hugo P","Bex M"];
+  var ni=0;function nm(){return POOL[(ni++)%POOL.length];}
+  function sizes(t){var o=[],r=t,pat=[3,2,4,2,1,3],i=0;while(r>0){var s=Math.min(r,pat[i%pat.length]);if(r-s===1)s=r;o.push(s);r-=s;i++;}return o;}
+  function pk(tour,booked,building){var ps=[];sizes(booked).forEach(function(s){ps.push({name:nm(),size:s,paid:true});});sizes(building).forEach(function(s){ps.push({name:nm(),size:s,paid:false});});return{kind:"pocket",tour:tour,booked:booked,building:building,parties:ps};}
   function bk(label,s,e,bus,pub,seats,cap){return{kind:"book",label:label,s:s,e:e,bus:bus,pub:!!pub,seats:seats,cap:cap};}
   var DAYS=[
     {n:28,dow:"SUN",items:[bk("Private",18,21,"Bus 2"),pk("bbq",1,6),pk("winery",0,4)]},
@@ -150,7 +167,7 @@
     {di:13,tour:"sightseeing",name:"Sam P",size:2,cold:40}
   ];
 
-  var pm={},sel=null; // pm: "di:tour" -> targetDay ; sel: "di:tour"
+  var pm={}; // pm: "di:tour" -> targetDay
   var COLH=["SUN","MON","TUE","WED","THU","FRI","SAT"];
   function fmt(h){h=h%24;var m=h>=12?"PM":"AM";var hh=h%12;if(hh===0)hh=12;return hh+" "+m;}
   function rng(s,e){var ms=(s%24)>=12?"PM":"AM",me=(e%24)>=12?"PM":"AM",sh=(s%12)||12,eh=(e%12)||12;return ms===me?(sh+"–"+eh+" "+me):(fmt(s)+"–"+fmt(e));}
@@ -174,7 +191,7 @@
     var realCnt=booked+realBuild, projCnt=booked+projBuild;
     var movable=realBuild>0 && !away;
     var nb=!freeBus(di,t.s,t.e);
-    var cls="pk"+(movable?" move":"")+(away?" away":"")+(sel===key(di,tour)?" sel":"");
+    var cls="pk clickable"+(movable?" move":"")+(away?" away":"");
     var dg=movable?' draggable="true"':'';
     var cnt=(realCnt!==projCnt)?(realCnt+' <span class="'+(projCnt>realCnt?'up':'dn')+'">→ '+projCnt+'</span>'):projCnt;
     var h='<div class="'+cls+'" data-di="'+di+'" data-tour="'+tour+'"'+dg+'>';
@@ -202,26 +219,47 @@
   }
   function wire(){
     var b=document.getElementById("board");
+    b.querySelectorAll('.pk').forEach(function(el){
+      el.addEventListener("click",function(e){e.stopPropagation();openGuests(+el.getAttribute("data-di"),el.getAttribute("data-tour"));});
+    });
     b.querySelectorAll('.pk[draggable="true"]').forEach(function(el){
       el.addEventListener("dragstart",function(e){e.stopPropagation();e.dataTransfer.setData("text/plain",key(+el.getAttribute("data-di"),el.getAttribute("data-tour")));e.dataTransfer.effectAllowed="move";});
-      el.addEventListener("click",function(e){e.stopPropagation();var k=key(+el.getAttribute("data-di"),el.getAttribute("data-tour"));sel=(sel===k?null:k);seltip();renderBoard();});
     });
     b.querySelectorAll('.day').forEach(function(day){
       var di=+day.getAttribute("data-day");
       day.addEventListener("dragover",function(e){e.preventDefault();day.classList.add("drop");});
       day.addEventListener("dragleave",function(){day.classList.remove("drop");});
       day.addEventListener("drop",function(e){e.preventDefault();day.classList.remove("drop");applyMove(e.dataTransfer.getData("text/plain"),di);});
-      day.addEventListener("click",function(){if(sel)applyMove(sel,di);});
     });
   }
   function applyMove(srcKey,dj){
     if(!srcKey)return;var p=srcKey.split(":"),di=+p[0],tour=p[1];var op=origPocket(di,tour);
-    if(!op||op.building<=0){sel=null;seltip();return;}
+    if(!op||op.building<=0)return;
     if(dj===di)delete pm[srcKey];else pm[srcKey]=dj;
-    sel=null;seltip();renderBoard();
+    renderBoard();
   }
   function count(){return Object.keys(pm).length;}
-  function seltip(){var t=document.getElementById("seltip");if(sel){var p=sel.split(":");t.textContent="Holding "+TOURS[p[1]].name+" from "+shortDay(+p[0])+" — tap a day to move it";t.classList.add("show");}else t.classList.remove("show");}
+  function openGuests(di,tour){
+    var t=TOURS[tour],op=origPocket(di,tour);if(!op)return;
+    var here=[];op.parties.forEach(function(p){if(!movedAway(di,tour))here.push({p:p,from:null});});
+    if(movedAway(di,tour))here=op.parties.map(function(p){return {p:p,from:null,gone:true};});
+    for(var k in pm){if(pm[k]===di){var sp=k.split(":"),sdi=+sp[0],st=sp[1];if(st===tour){var sop=origPocket(sdi,st);if(sop)sop.parties.forEach(function(p){if(!p.paid)here.push({p:p,from:sdi});});}}}
+    var proj=booked0(op)+presentBuild(di,tour);
+    var h='<div class="mh"><span class="mt" style="color:'+t.c+'">'+t.name+'</span><span class="msub2">'+shortDay(di)+' · '+rng(t.s,t.e)+' · '+proj+'/10</span><button class="mx" id="gmx">✕</button></div>';
+    h+='<div class="msub">Guests in this tour. Open a guest to see their workspace.</div>';
+    here.forEach(function(r){
+      var p=r.p;
+      h+='<div class="grow'+(r.gone?' goneRow':'')+'"><span class="gnm">'+p.name+'</span>'+(p.paid?'<span class="gp">paid</span>':'')+(r.from!=null?'<span class="gfrom">from '+shortDay(r.from)+'</span>':'')+'<span class="gsz">'+p.size+'</span><button class="gw" data-w="'+p.name+'">Open workspace ›</button></div>';
+    });
+    document.getElementById("gmodal").innerHTML=h;
+    document.getElementById("ov").classList.add("show");
+    document.getElementById("gmx").onclick=closeGuests;
+    document.querySelectorAll("#gmodal .gw").forEach(function(b){b.onclick=function(){toast("<b>Prototype.</b> This would open "+b.getAttribute("data-w")+"\\u2019s customer workspace — the existing per-customer view.");};});
+  }
+  function booked0(op){var s=0;op.parties.forEach(function(p){if(p.paid)s+=p.size;});return s;}
+  function presentBuild(di,tour){var s=movedAway(di,tour)?0:incBuild0(origPocket(di,tour));s+=incomingBuilding(di,tour);return s;}
+  function incBuild0(op){var s=0;op.parties.forEach(function(p){if(!p.paid)s+=p.size;});return s;}
+  function closeGuests(){document.getElementById("ov").classList.remove("show");}
   function syncBar(){var b=document.getElementById("bar");document.getElementById("barCount").textContent=count()+" planned move"+(count()===1?"":"s");if(count()>0)b.classList.add("show");else b.classList.remove("show");}
   var tt;function toast(m){var t=document.getElementById("toast");t.innerHTML=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("show");},4200);}
 
@@ -249,7 +287,7 @@
   document.getElementById("clearBtn").onclick=function(){pm={};sel=null;seltip();renderBoard();};
   document.getElementById("createBtn").onclick=function(){var n=count();toast("<b>Prototype — nothing sent.</b> In the real system this drafts "+n+" offer"+(n===1?"":"s")+" into Tim\\u2019s approval queue; he approves each before any message goes out.");};
   document.querySelectorAll(".tabs span").forEach(function(s){s.onclick=function(){document.querySelectorAll(".tabs span").forEach(function(x){x.classList.remove("on");});s.classList.add("on");var tb=s.getAttribute("data-tab");document.getElementById("planning").style.display=tb==="planning"?"block":"none";document.getElementById("booked").style.display=tb==="booked"?"block":"none";document.getElementById("dormant").style.display=tb==="dormant"?"block":"none";if(tb==="booked")renderBooked();if(tb==="dormant")renderDormant();};});
-  document.querySelectorAll(".seg button").forEach(function(bn){bn.onclick=function(){if(bn.getAttribute("data-view")==="list")toast("List = your current board. This prototype is the new Plan calendar.");};});
+  document.getElementById("ov").addEventListener("click",function(e){if(e.target.id==="ov")closeGuests();});
   renderBoard();
 })();
 </script>
